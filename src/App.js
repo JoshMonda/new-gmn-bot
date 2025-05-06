@@ -7,7 +7,7 @@ const App = () => {
   const [channelId, setChannelId] = useState("");
 
   // Base URL for live vercel backend
-  const API_BASE = "https://new-gmn-bot.vercel.app/";
+  const API_BASE = "https://new-gmn-nxqziqd2l-joshmondas-projects.vercel.app/";
 
   // Send DM
   const sendWelcomeMessage = async () => {
