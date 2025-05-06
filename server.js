@@ -1,26 +1,29 @@
 // server.js
 require("dotenv").config();
-const express = require("express");
+
 const path = require("path");
+const cors = require("cors");
+const express = require("express");
 const { App, ExpressReceiver } = require("@slack/bolt");
 
-// ⚡ Initialize Slack ExpressReceiver
+// ⚡ 1) Initialize Slack ExpressReceiver on /api/slack/events
 const expressReceiver = new ExpressReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
+  endpoints: "/api/slack/events",
 });
 
-// ⚡ Initialize Slack Bolt App
+// ⚡ 2) Initialize Slack Bolt App with that receiver
 const slackApp = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
 });
 
-// ⚡ Auto‑send welcome message when a new user joins
+// ⚡ 3) Bolt event handler: welcome DMs + announce on team_join
 slackApp.event("team_join", async ({ event, client }) => {
   const userId = event.user.id;
   console.log("🚀 New user joined:", userId);
 
-  // ——— DM to new user ———
+  // — DM to new user —
   const welcomeText = `
 :wave: *Welcome <@${userId}>!* Let’s help you get started and connect with other members well. Your profile must include your personal headshot :busts_in_silhouette:. Include your marketing superpower :mechanical_arm:. See <@U023P5YL0HE> or <@U03670FRLKY>'s profiles as examples.
 
@@ -44,26 +47,21 @@ slackApp.event("team_join", async ({ event, client }) => {
     text: welcomeText,
   });
 
-  // ——— Announcement in general channel ———
+  // — Announcement in general channel —
   await client.chat.postMessage({
-    channel: "C022WC9572N", // replace with your actual channel ID
-    text: `:tada: Please let's welcome <@${userId}> to the Giver Marketing Network community! <@${userId}> Check your DM for more info.`,
+    channel: "C022WC9572N", // replace with your channel ID
+    text: `:tada: Please let's welcome <@${userId}> to the Giver Marketing Network community! Check your DM for more info.`,
   });
 });
 
-// 🌐 Create Express server
-const app = express();
-
-// ─── Mount the Bolt receiver ────────────────────────────────────────────────────
-app.use(expressReceiver.app);
 // ────────────────────────────────────────────────────────────────────────────────
+// 4) Grab the Express app from the receiver and add middleware + routes
+const app = expressReceiver.app;
 
-const cors = require("cors");
-const bodyParser = require("body-parser");
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// 🧪 Manual: Send DM
+// 🧪 Manual: Send a welcome DM
 app.post("/api/send-welcome-message", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -71,7 +69,7 @@ app.post("/api/send-welcome-message", async (req, res) => {
       channel: userId,
       text: `:wave: *Welcome <@${userId}>!* ...`,
     });
-    res.status(200).json({ message: "Welcome message sent out!" });
+    res.json({ message: "Welcome message sent out!" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Slack message failed" });
@@ -86,7 +84,7 @@ app.post("/api/send-channel-message", async (req, res) => {
       channel: channelId,
       text: `:tada: Please welcome <@${userId}>...`,
     });
-    res.status(200).json({ message: "Channel welcome message sent!" });
+    res.json({ message: "Channel welcome message sent!" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Slack channel message failed" });
@@ -104,53 +102,53 @@ app.post("/api/send-video", async (req, res) => {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "1. Welcome & Introduction:\n<https://www.youtube.com/watch?v=ZA7Js3Ibsk0|Watch here>",
+            text:
+              "1. Welcome & Introduction:\n<https://www.youtube.com/watch?v=ZA7Js3Ibsk0|Watch here>",
           },
         },
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "2. Profile Setup:\n<https://www.youtube.com/watch?v=bvIUaSUdTGE|Watch here>",
-          },
-        },
-
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: "3. Getting Showcased:\n<https://www.youtube.com/watch?v=vod8x79CVVQ|Watch here>",
+            text:
+              "2. Profile Setup:\n<https://www.youtube.com/watch?v=bvIUaSUdTGE|Watch here>",
           },
         },
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "2. Team Collaboration:\n<https://www.youtube.com/watch?v=hZ7_uf5iyCg|Watch here>",
+            text:
+              "3. Getting Showcased:\n<https://www.youtube.com/watch?v=vod8x79CVVQ|Watch here>",
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text:
+              "4. Team Collaboration:\n<https://www.youtube.com/watch?v=hZ7_uf5iyCg|Watch here>",
           },
         },
       ],
     });
-    res.status(200).json({ message: "Video message sent!" });
+    res.json({ message: "Video message sent!" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Video post failed" });
   }
 });
 
-// Serve React frontend
+// ────────────────────────────────────────────────────────────────────────────────
+// 5) Serve your React frontend build + catch-all
 app.use(express.static(path.join(__dirname, "build")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Start server + Slack app
+// ────────────────────────────────────────────────────────────────────────────────
+// 6) Start Express (Bolt’s routes are already wired in)
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () =>
   console.log(`🌐 Express server running on port ${PORT}`)
 );
-
-(async () => {
-  await slackApp.start();
-  console.log("⚡️ Slack Bolt app initialized and listening for events");
-})();
