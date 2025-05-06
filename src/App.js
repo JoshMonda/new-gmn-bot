@@ -6,8 +6,8 @@ const App = () => {
   const [userId, setUserId] = useState("");
   const [channelId, setChannelId] = useState("");
 
-  // Base URL for live Heroku backend
-  const API_BASE = "https://new-giver-bot-dae395301df0.herokuapp.com";
+  // Base URL for live vercel backend
+  const API_BASE = "https://new-gmn-bot.vercel.app/";
 
   // Send DM
   const sendWelcomeMessage = async () => {
