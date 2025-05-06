@@ -7,7 +7,7 @@ const App = () => {
   const [userId, setUserId] = useState("");
   const [channelId, setChannelId] = useState("");
 
-  // 🚀 Helper to POST JSON and throw on non-OK
+  // Helper to POST JSON and throw on error
   const postJson = async (url, body) => {
     const res = await fetch(url, {
       method: "POST",
@@ -21,10 +21,9 @@ const App = () => {
     return res.json();
   };
 
-  // Send a DM to a user
   const sendWelcomeMessage = async () => {
     if (!userId) {
-      alert("⚠️ Please enter a Slack user ID.");
+      alert("Please enter a Slack user ID.");
       return;
     }
     setLoading(true);
@@ -33,16 +32,15 @@ const App = () => {
       alert("✅ Welcome message sent!");
     } catch (err) {
       console.error(err);
-      alert(`❌ Error: ${err.message}`);
+      alert("❌ " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Send a message to a channel
   const sendChannelMessage = async () => {
     if (!userId || !channelId) {
-      alert("⚠️ Please enter both a Slack user ID and a Channel ID.");
+      alert("Please enter both a Slack user ID and a Channel ID.");
       return;
     }
     setLoading(true);
@@ -51,13 +49,12 @@ const App = () => {
       alert("✅ Channel message sent!");
     } catch (err) {
       console.error(err);
-      alert(`❌ Error: ${err.message}`);
+      alert("❌ " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Send your onboarding video blocks
   const sendVideo = async () => {
     setLoading(true);
     try {
@@ -65,7 +62,7 @@ const App = () => {
       alert("✅ Video message sent!");
     } catch (err) {
       console.error(err);
-      alert(`❌ Error: ${err.message}`);
+      alert("❌ " + err.message);
     } finally {
       setLoading(false);
     }
@@ -80,12 +77,7 @@ const App = () => {
         placeholder="Enter Slack user ID"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
-        style={{
-          padding: 10,
-          marginBottom: 10,
-          width: 300,
-          fontSize: 16,
-        }}
+        style={{ padding: 10, marginBottom: 10, width: 300, fontSize: 16 }}
       />
       <br />
       <input
@@ -93,12 +85,7 @@ const App = () => {
         placeholder="Enter Channel ID or #channel-name"
         value={channelId}
         onChange={(e) => setChannelId(e.target.value)}
-        style={{
-          padding: 10,
-          marginBottom: 20,
-          width: 300,
-          fontSize: 16,
-        }}
+        style={{ padding: 10, marginBottom: 20, width: 300, fontSize: 16 }}
       />
       <br />
 
@@ -107,7 +94,7 @@ const App = () => {
         disabled={loading || !userId}
         style={{ margin: 10, padding: "10px 20px", fontSize: 16 }}
       >
-        {loading ? "Sending..." : "Send Welcome DM"}
+        {loading ? "Sending…" : "Send Welcome DM"}
       </button>
 
       <button
@@ -115,7 +102,7 @@ const App = () => {
         disabled={loading || !userId || !channelId}
         style={{ margin: 10, padding: "10px 20px", fontSize: 16 }}
       >
-        {loading ? "Sending..." : "Send Channel Message"}
+        {loading ? "Sending…" : "Send Channel Message"}
       </button>
 
       <button
@@ -123,7 +110,7 @@ const App = () => {
         disabled={loading}
         style={{ margin: 10, padding: "10px 20px", fontSize: 16 }}
       >
-        {loading ? "Sending..." : "Send Video Message"}
+        {loading ? "Sending…" : "Send Video Message"}
       </button>
     </div>
   );
